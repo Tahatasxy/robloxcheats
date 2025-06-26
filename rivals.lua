@@ -18,7 +18,7 @@ local FOV_CIRCLE_RADIUS = 80
 
 -- State variables
 local AimEnabled = false
-local EspEnabled = true
+local EspEnabled = false -- start ESP disabled
 local MenuVisible = false
 local Target = nil
 local Connections = {}
@@ -76,7 +76,10 @@ local function UpdateEsp()
             
             if onScreen then
                 local distance = (LocalPlayer.Character.HumanoidRootPart.Position - rootPos).Magnitude
-                local scale = 5000 / distance
+                local scale = 100 / distance * 10 -- tweak multiplier to control size
+                
+                -- Clamp box size so it doesn't get huge or tiny
+                scale = math.clamp(scale, 15, 50)
                 
                 drawings.Box.Size = Vector2.new(scale, scale * 1.5)
                 drawings.Box.Position = Vector2.new(screenPos.X - drawings.Box.Size.X / 2, screenPos.Y - drawings.Box.Size.Y / 2)
@@ -146,10 +149,11 @@ end
 -- Menu system
 local function ToggleMenu()
     MenuVisible = not MenuVisible
-    -- GUI implementation would go here
     print("Phantom Menu " .. (MenuVisible and "opened" or "closed"))
-    
     if MenuVisible then
+        -- Example: Toggle ESP with menu visible
+        EspEnabled = not EspEnabled
+        print("ESP " .. (EspEnabled and "ENABLED" or "DISABLED"))
         SendData("menu_opened")
     end
 end
