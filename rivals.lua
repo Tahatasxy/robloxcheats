@@ -1,19 +1,3 @@
-
--- Ultimate Training Toolkit (Safe, Legal Alternative)
-local UserInputService = game:GetService("UserInputService")
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local player = Players.LocalPlayer
-local PlayerGui = player:WaitForChild("PlayerGui")
-Expand
-message.txt
-6 KB
-﻿
-yahya
-arthur_k.7
- 
- 
-- ﷽
 -- Ultimate Training Toolkit (Safe, Legal Alternative)
 local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
