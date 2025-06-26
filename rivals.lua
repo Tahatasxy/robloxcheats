@@ -1,29 +1,30 @@
---[[ 📌 Aimbot + ESP with Toggleable Menu | By xSNYZ ]]--
+-- Simple Aimbot + ESP for Rivals | Xeno executor compatible
 
--- // Services
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 
--- // Variables
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
+local Mouse = LocalPlayer:GetMouse()
+
 local AimbotEnabled = false
 local ESPEnabled = false
 local MenuVisible = false
-local FOV_RADIUS = 100
-local AIM_PART = "Head"
-local TEAM_CHECK = true
-local espObjects = {}
 
--- // GUI Setup
-local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
-ScreenGui.Name = "RivalsCheatMenu"
+local FOV_RADIUS = 150
+local AIM_PART = "UpperTorso" -- try UpperTorso since Rivals uses R15
+local TEAM_CHECK = true
+
+-- Create GUI
+local ScreenGui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
+ScreenGui.Name = "RivalsCheatUI"
+ScreenGui.ResetOnSpawn = false
 
 local Frame = Instance.new("Frame", ScreenGui)
-Frame.Size = UDim2.new(0, 200, 0, 130)
-Frame.Position = UDim2.new(0.5, -100, 0.4, 0)
-Frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+Frame.Size = UDim2.new(0, 220, 0, 150)
+Frame.Position = UDim2.new(0.5, -110, 0.4, 0)
+Frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 Frame.BorderSizePixel = 0
 Frame.Visible = false
 
@@ -52,47 +53,57 @@ InfoLabel.BackgroundTransparency = 1
 InfoLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
 InfoLabel.Font = Enum.Font.SourceSans
 InfoLabel.TextSize = 16
-InfoLabel.Text = "RightShift to toggle menu"
+InfoLabel.Text = "Press RightShift to toggle menu"
 
--- // Aimbot toggle
+-- FOV Circle
+local FOVCircle = Drawing.new("Circle")
+FOVCircle.Visible = false
+FOVCircle.Radius = FOV_RADIUS
+FOVCircle.Color = Color3.fromRGB(255, 255, 255)
+FOVCircle.Thickness = 2
+FOVCircle.Filled = false
+FOVCircle.Transparency = 1
+
+-- Toggles
 AimbotButton.MouseButton1Click:Connect(function()
     AimbotEnabled = not AimbotEnabled
     AimbotButton.Text = AimbotEnabled and "Aimbot: ON" or "Aimbot: OFF"
+    FOVCircle.Visible = AimbotEnabled and MenuVisible
 end)
 
--- // ESP toggle
 ESPButton.MouseButton1Click:Connect(function()
     ESPEnabled = not ESPEnabled
     ESPButton.Text = ESPEnabled and "ESP: ON" or "ESP: OFF"
-
-    -- Refresh ESP visibility
-    for player, gui in pairs(espObjects) do
-        if gui and gui.Parent then
-            gui.Enabled = ESPEnabled
+    if not ESPEnabled then
+        for _, player in pairs(Players:GetPlayers()) do
+            if player.Character then
+                local box = player.Character:FindFirstChild("ESP_Box")
+                if box then box:Destroy() end
+            end
         end
     end
 end)
 
--- // Menu toggle with RightShift
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if input.KeyCode == Enum.KeyCode.RightShift then
         MenuVisible = not MenuVisible
         Frame.Visible = MenuVisible
+        FOVCircle.Visible = AimbotEnabled and MenuVisible
     end
 end)
 
--- // Aimbot target
 local function getClosestPlayer()
-    local closest, shortestDist = nil, FOV_RADIUS
-    for _, player in ipairs(Players:GetPlayers()) do
+    local closest
+    local shortestDist = FOV_RADIUS
+
+    for _, player in pairs(Players:GetPlayers()) do
         if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild(AIM_PART) then
-            if TEAM_CHECK and player.Team == LocalPlayer.Team then
-                continue
-            end
+            if TEAM_CHECK and player.Team == LocalPlayer.Team then continue end
+
             local part = player.Character[AIM_PART]
             local screenPos, onScreen = Camera:WorldToViewportPoint(part.Position)
             if onScreen then
-                local mousePos = UserInputService:GetMouseLocation()
+                local mousePos = Vector2.new(Mouse.X, Mouse.Y)
                 local dist = (Vector2.new(screenPos.X, screenPos.Y) - mousePos).Magnitude
                 if dist < shortestDist then
                     shortestDist = dist
@@ -104,66 +115,35 @@ local function getClosestPlayer()
     return closest
 end
 
--- // Aimbot logic
 RunService.RenderStepped:Connect(function()
+    FOVCircle.Position = Vector2.new(Mouse.X, Mouse.Y)
+
     if AimbotEnabled then
         local target = getClosestPlayer()
         if target then
-            Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.Position)
+            Camera.CFrame = CFrame.lookAt(Camera.CFrame.Position, target.Position)
+        end
+    end
+
+    if ESPEnabled then
+        for _, player in pairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                if TEAM_CHECK and player.Team == LocalPlayer.Team then continue end
+
+                local char = player.Character
+                local box = char:FindFirstChild("ESP_Box")
+                if not box then
+                    box = Instance.new("BoxHandleAdornment")
+                    box.Name = "ESP_Box"
+                    box.Adornee = char.HumanoidRootPart
+                    box.AlwaysOnTop = true
+                    box.ZIndex = 5
+                    box.Size = Vector3.new(4, 6, 1)
+                    box.Color3 = Color3.new(1, 0, 0)
+                    box.Transparency = 0.5
+                    box.Parent = char
+                end
+            end
         end
     end
 end)
-
--- // ESP logic
-local function createESP(player)
-    if espObjects[player] then return end
-    local box = Instance.new("BillboardGui")
-    box.Name = "ESP"
-    box.Size = UDim2.new(4, 0, 5, 0)
-    box.AlwaysOnTop = true
-    box.Enabled = ESPEnabled
-
-    local frame = Instance.new("Frame", box)
-    frame.Size = UDim2.new(1, 0, 1, 0)
-    frame.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-    frame.BackgroundTransparency = 0.4
-    frame.BorderSizePixel = 0
-
-    local hrp = player.Character:FindFirstChild("HumanoidRootPart")
-    if hrp then
-        box.Parent = hrp
-        espObjects[player] = box
-    end
-end
-
--- // Cleanup on leave
-Players.PlayerRemoving:Connect(function(player)
-    if espObjects[player] then
-        espObjects[player]:Destroy()
-        espObjects[player] = nil
-    end
-end)
-
--- // Create ESP for new players
-Players.PlayerAdded:Connect(function(player)
-    player.CharacterAdded:Connect(function()
-        wait(1)
-        if TEAM_CHECK and player.Team == LocalPlayer.Team then return end
-        createESP(player)
-    end)
-end)
-
--- // Setup existing players
-for _, player in ipairs(Players:GetPlayers()) do
-    if player ~= LocalPlayer then
-        player.CharacterAdded:Connect(function()
-            wait(1)
-            if TEAM_CHECK and player.Team == LocalPlayer.Team then return end
-            createESP(player)
-        end)
-        if player.Character then
-            if TEAM_CHECK and player.Team == LocalPlayer.Team then continue end
-            createESP(player)
-        end
-    end
-end
